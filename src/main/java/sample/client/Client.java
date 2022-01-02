@@ -16,21 +16,18 @@
 
 package sample.client;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
+import io.grpc.stub.StreamObserver;
 import io.helidon.microprofile.grpc.client.GrpcChannel;
 import io.helidon.microprofile.grpc.client.GrpcProxy;
-
-import io.grpc.stub.StreamObserver;
-import io.helidon.microprofile.grpc.core.GrpcMarshaller;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * A client to the {@link StringService}.
@@ -39,6 +36,7 @@ import javax.inject.Inject;
  * is initialised in the {@link #main(String[])} method.
  */
 @ApplicationScoped
+@Slf4j
 public class Client {
 
     /**
@@ -63,12 +61,10 @@ public class Client {
     private ConsumeService consumeService;
 
 
-
     /**
      * Program entry point.
      *
-     * @param args  the program arguments
-     *
+     * @param args the program arguments
      * @throws Exception if an error occurs
      */
     public static void main(String[] args) throws Exception {
@@ -87,25 +83,27 @@ public class Client {
         System.out.println("Unary Lower response: '" + response + "'");
     }
 
-    public void publish(){
+    public void publish() {
         StreamObserver<String> responseObserver = new StreamObserver<String>() {
             @Override
             public void onNext(String metaData) {
                 System.out.println(metaData);
             }
+
             @Override
             public void onError(Throwable throwable) {
             }
+
             @Override
             public void onCompleted() {
                 System.out.println("finished");
             }
         };
 
-        StreamObserver<Record> requestObserver = publishService.publish(responseObserver);
+        StreamObserver<Record<String, String>> requestObserver = publishService.publish(responseObserver);
         try {
-            for (int x=0;x<100;x++) {
-                requestObserver.onNext(new Record(Integer.toString(x),"Joe Biden", "test"));
+            for (int x = 0; x < 0; x++) {
+                requestObserver.onNext(Record.<String, String>builder().key(Integer.toString(x)).topic("test").val("Joe Biden").build());
             }
         } catch (RuntimeException e) {
             requestObserver.onError(e);
@@ -115,8 +113,24 @@ public class Client {
         System.out.println("done!");
     }
 
-    public void consume(){
+    public void consume() {
+        var response = new StreamObserver<Record<String, String>>() {
+            @Override
+            public void onNext(Record<String, String> record) {
+                System.out.println(record);
+            }
 
+            @Override
+            public void onError(Throwable throwable) {
+                throwable.printStackTrace();
+            }
+
+            @Override
+            public void onCompleted() {
+                log.info("consume completed");
+            }
+        };
+        consumeService.consume("test", response);
     }
 
     /**
@@ -152,6 +166,7 @@ public class Client {
 
     /**
      * Call the bidirectional streaming {@code Echo} method.
+     *
      * @throws Exception if the call fails
      */
     public void bidirectional() throws Exception {

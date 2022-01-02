@@ -16,11 +16,10 @@
 
 package sample.client;
 
-import java.util.stream.Stream;
-
+import io.grpc.stub.StreamObserver;
 import io.helidon.microprofile.grpc.core.*;
 
-import io.grpc.stub.StreamObserver;
+import java.util.stream.Stream;
 
 /**
  * The gRPC StringService.
@@ -36,7 +35,7 @@ public interface StringService {
     /**
      * Convert a string value to upper case.
      *
-     * @param request  the request containing the string to convert
+     * @param request the request containing the string to convert
      * @return the request value converted to upper case
      */
     @Unary
@@ -45,32 +44,35 @@ public interface StringService {
     /**
      * Convert a string value to lower case.
      *
-     * @param request  the request containing the string to convert
-     * @return  the request converted to lower case
+     * @param request the request containing the string to convert
+     * @return the request converted to lower case
      */
     @Unary
     String lower(String request);
 
     /**
      * Split a space delimited string value and stream back the split parts.
-     * @param request  the request containing the string to split
-     * @return  a {@link java.util.stream.Stream} containing the split parts
+     *
+     * @param request the request containing the string to split
+     * @return a {@link java.util.stream.Stream} containing the split parts
      */
     @ServerStreaming
     Stream<String> split(String request);
 
     /**
      * Join a stream of string values and return the result.
-     * @param observer  the request containing the string to split
-     * @return  a {@link java.util.stream.Stream} containing the split parts
+     *
+     * @param observer the request containing the string to split
+     * @return a {@link java.util.stream.Stream} containing the split parts
      */
     @ClientStreaming
     StreamObserver<String> join(StreamObserver<String> observer);
 
     /**
      * Echo each value streamed from the client back to the client.
-     * @param observer  the {@link io.grpc.stub.StreamObserver} to send responses to
-     * @return  the {@link io.grpc.stub.StreamObserver} to receive requests from
+     *
+     * @param observer the {@link io.grpc.stub.StreamObserver} to send responses to
+     * @return the {@link io.grpc.stub.StreamObserver} to receive requests from
      */
     @Bidirectional
     StreamObserver<String> echo(StreamObserver<String> observer);
